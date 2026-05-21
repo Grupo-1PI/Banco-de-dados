@@ -1,13 +1,3 @@
-INSERT INTO cargo (nome, descricao) VALUES
-('Administrador', 'Acesso total ao sistema'),
-('Recepcionista', 'Gerencia agendamentos'),
-('Acupunturista', 'Realiza atendimentos');
-
-INSERT INTO permissoes (nome, descricao) VALUES
-('CRUD_USUARIO', 'Gerenciar usuários'),
-('CRUD_AGENDAMENTO', 'Gerenciar agendamentos'),
-('REALIZAR_ATENDIMENTO', 'Executar atendimentos');
-
 INSERT INTO permissoes_cargo VALUES
 (1, 1),
 (2, 1),
@@ -23,7 +13,8 @@ INSERT INTO status (nome) VALUES
 
 INSERT INTO sala (descricao) VALUES
 ('Sala 1'),
-('Sala 2');
+('Sala 2'),
+('Sala Online');
 
 INSERT INTO especialidade (nome) VALUES
 ('Dor muscular'),
