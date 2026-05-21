@@ -222,3 +222,140 @@ CREATE TABLE IF NOT EXISTS sala_servico (
     FOREIGN KEY (fkServico)
     REFERENCES servico (id)
 );
+
+INSERT INTO cargo (nome, descricao) VALUES
+('Administrador', 'Acesso total ao sistema'),
+('Recepcionista', 'Gerencia agendamentos'),
+('Acupunturista', 'Realiza atendimentos');
+
+INSERT INTO permissoes (nome, descricao) VALUES
+('CRUD_USUARIO', 'Gerenciar usuários'),
+('CRUD_AGENDAMENTO', 'Gerenciar agendamentos'),
+('REALIZAR_ATENDIMENTO', 'Executar atendimentos');
+
+INSERT INTO permissoes_cargo VALUES
+(1, 1),
+(2, 1),
+(3, 1),
+(2, 2),
+(3, 3);
+
+INSERT INTO status (nome) VALUES
+('Agendado'),
+('Confirmado'),
+('Cancelado'),
+('Finalizado');
+
+INSERT INTO sala (descricao) VALUES
+('Sala 1'),
+('Sala 2');
+
+INSERT INTO especialidade (nome) VALUES
+('Dor muscular'),
+('Ansiedade'),
+('Insônia');
+
+INSERT INTO servico (nome, valor, descricao, tempoMedio) VALUES
+('Sessão de Acupuntura', 120.00, 'Sessão padrão', 60),
+('Auriculoterapia', 80.00, 'Tratamento auricular', 40);
+
+INSERT INTO especialidade_servico VALUES
+(1, 1),
+(2, 1),
+(3, 1),
+(2, 2);
+
+DELIMITER $$
+
+CREATE TRIGGER before_insert_agendamento
+BEFORE INSERT ON agendamento
+FOR EACH ROW
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM agendamento
+    WHERE fkFuncionario = NEW.fkFuncionario
+      AND NEW.data_hora_inicio < data_hora_fim
+      AND NEW.data_hora_fim > data_hora_inicio
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Conflito de horário para o funcionário';
+  END IF;
+END$$
+
+DELIMITER ;
+
+DELIMITER $$
+
+CREATE TRIGGER before_insert_agendamento_horario
+BEFORE INSERT ON agendamento
+FOR EACH ROW
+BEGIN
+  DECLARE dia INT;
+
+  SET dia = DAYOFWEEK(NEW.data_hora_inicio);
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM agenda_funcionario
+    WHERE fkFuncionario = NEW.fkFuncionario
+      AND dia_semana = dia
+      AND TIME(NEW.data_hora_inicio) >= hora_inicio
+      AND TIME(NEW.data_hora_fim) <= hora_fim
+  ) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Fora do horário de trabalho';
+  END IF;
+END$$
+
+DELIMITER ;
+
+CREATE OR REPLACE VIEW vw_agendamentos_completo AS
+SELECT
+  a.id,
+  u.nome AS cliente,
+  f.id AS funcionario_id,
+  uf.nome AS funcionario,
+  GROUP_CONCAT(s.nome ORDER BY s.nome SEPARATOR ', ') AS servicos,
+  sa.descricao AS sala,
+  st.nome AS status,
+  a.data_hora_inicio,
+  a.data_hora_fim
+FROM agendamento a
+JOIN cliente c ON a.fkCliente = c.id
+JOIN usuario u ON c.fkUsuario = u.id
+JOIN funcionario f ON a.fkFuncionario = f.id
+JOIN usuario uf ON f.fkUsuario = uf.id
+LEFT JOIN atendimento_servico ats ON ats.fkAgendamento = a.id
+LEFT JOIN servico s ON ats.fkServico = s.id
+JOIN sala sa ON a.fkSala = sa.id
+JOIN status st ON a.fkStatus = st.id
+GROUP BY
+  a.id,
+  u.nome,
+  f.id,
+  uf.nome,
+  sa.descricao,
+  st.nome,
+  a.data_hora_inicio,
+  a.data_hora_fim;
+
+CREATE OR REPLACE VIEW vw_faturamento AS
+SELECT
+  DATE(a.data_hora_inicio) AS data,
+  SUM(ats.valor_unitario) AS total
+FROM agendamento a
+JOIN atendimento_servico ats ON ats.fkAgendamento = a.id
+WHERE a.fkStatus = 4
+GROUP BY DATE(a.data_hora_inicio);
+
+CREATE OR REPLACE VIEW vw_agenda_funcionario AS
+SELECT
+  f.id AS funcionario_id,
+  u.nome,
+  af.dia_semana,
+  af.hora_inicio,
+  af.hora_fim
+FROM funcionario f
+JOIN usuario u ON f.fkUsuario = u.id
+JOIN agenda_funcionario af ON af.fkFuncionario = f.id;
