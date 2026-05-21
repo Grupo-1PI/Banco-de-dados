@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS clinica_acupuntura;
-USE clinica_acupuntura;
+CREATE DATABASE IF NOT EXISTS taotenshin;
+USE taotenshin;
 
 CREATE TABLE IF NOT EXISTS cargo (
   id INT NOT NULL AUTO_INCREMENT,
@@ -30,8 +30,11 @@ CREATE TABLE IF NOT EXISTS usuario (
   ativo TINYINT(1) NOT NULL DEFAULT 1,
   fkEndereco INT NOT NULL,
   PRIMARY KEY (id),
-  UNIQUE INDEX email_UNIQUE (email ASC),
-  CONSTRAINT fk_usuario_endereco1 FOREIGN KEY (fkEndereco) REFERENCES endereco (id) ON DELETE RESTRICT
+  INDEX fk_usuario_endereco1_idx (fkEndereco ASC) VISIBLE,
+  UNIQUE INDEX email_UNIQUE (email ASC) VISIBLE,
+  CONSTRAINT fk_usuario_endereco1
+    FOREIGN KEY (fkEndereco)
+    REFERENCES endereco (id)
 );
 
 CREATE TABLE IF NOT EXISTS funcionario (
@@ -39,8 +42,14 @@ CREATE TABLE IF NOT EXISTS funcionario (
   fkUsuario INT NOT NULL,
   fkCargo INT NOT NULL,
   PRIMARY KEY (id, fkUsuario),
-  CONSTRAINT funcionario_ibfk_1 FOREIGN KEY (fkCargo) REFERENCES cargo (id) ON DELETE RESTRICT,
-  CONSTRAINT fk_funcionario_usuario1 FOREIGN KEY (fkUsuario) REFERENCES usuario (id) ON DELETE CASCADE
+  INDEX fkCargo (fkCargo ASC) VISIBLE,
+  INDEX fk_funcionario_usuario1_idx (fkUsuario ASC) VISIBLE,
+  CONSTRAINT funcionario_ibfk_1
+    FOREIGN KEY (fkCargo)
+    REFERENCES cargo (id),
+  CONSTRAINT fk_funcionario_usuario1
+    FOREIGN KEY (fkUsuario)
+    REFERENCES usuario (id)
 );
 
 CREATE TABLE IF NOT EXISTS agenda_excecao (
@@ -51,7 +60,10 @@ CREATE TABLE IF NOT EXISTS agenda_excecao (
   hora_fim TIME NULL DEFAULT NULL,
   disponivel TINYINT(1) NULL DEFAULT '1',
   PRIMARY KEY (id),
-  CONSTRAINT agenda_excecao_ibfk_1 FOREIGN KEY (fkFuncionario) REFERENCES funcionario (id) ON DELETE CASCADE
+  INDEX fkFuncionario (fkFuncionario ASC) VISIBLE,
+  CONSTRAINT agenda_excecao_ibfk_1
+    FOREIGN KEY (fkFuncionario)
+    REFERENCES funcionario (id)
 );
 
 CREATE TABLE IF NOT EXISTS agenda_funcionario (
@@ -61,7 +73,10 @@ CREATE TABLE IF NOT EXISTS agenda_funcionario (
   hora_inicio TIME NOT NULL,
   hora_fim TIME NOT NULL,
   PRIMARY KEY (id),
-  CONSTRAINT agenda_funcionario_ibfk_1 FOREIGN KEY (fkFuncionario) REFERENCES funcionario (id) ON DELETE CASCADE
+  INDEX fkFuncionario (fkFuncionario ASC) VISIBLE,
+  CONSTRAINT agenda_funcionario_ibfk_1
+    FOREIGN KEY (fkFuncionario)
+    REFERENCES funcionario (id)
 );
 
 CREATE TABLE IF NOT EXISTS cliente (
@@ -69,21 +84,15 @@ CREATE TABLE IF NOT EXISTS cliente (
   fkUsuario INT NOT NULL,
   observacao VARCHAR(255) NULL DEFAULT NULL,
   PRIMARY KEY (id, fkUsuario),
-  CONSTRAINT fk_cliente_usuario1 FOREIGN KEY (fkUsuario) REFERENCES usuario (id) ON DELETE CASCADE
+  INDEX fk_cliente_usuario1_idx (fkUsuario ASC) VISIBLE,
+  CONSTRAINT fk_cliente_usuario1
+    FOREIGN KEY (fkUsuario)
+    REFERENCES usuario (id)
 );
 
 CREATE TABLE IF NOT EXISTS sala (
   id INT NOT NULL AUTO_INCREMENT,
   descricao VARCHAR(45) NULL DEFAULT NULL,
-  PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS servico (
-  id INT NOT NULL AUTO_INCREMENT,
-  nome VARCHAR(100) NOT NULL,
-  valor DECIMAL(10,2) NOT NULL,
-  descricao VARCHAR(255) NOT NULL,
-  tempoMedio INT NULL DEFAULT NULL,
   PRIMARY KEY (id)
 );
 
@@ -101,33 +110,51 @@ CREATE TABLE IF NOT EXISTS agendamento (
   fkCliente INT NOT NULL,
   fkFuncionario INT NOT NULL,
   fkSala INT NOT NULL,
-  fkServico INT NOT NULL,
   fkStatus INT NOT NULL,
   PRIMARY KEY (id),
-  CONSTRAINT agendamento_ibfk_1 FOREIGN KEY (fkCliente) REFERENCES cliente (id) ON DELETE RESTRICT,
-  CONSTRAINT agendamento_ibfk_2 FOREIGN KEY (fkFuncionario) REFERENCES funcionario (id) ON DELETE RESTRICT,
-  CONSTRAINT agendamento_ibfk_3 FOREIGN KEY (fkSala) REFERENCES sala (id) ON DELETE RESTRICT,
-  CONSTRAINT agendamento_ibfk_4 FOREIGN KEY (fkServico) REFERENCES servico (id) ON DELETE RESTRICT,
-  CONSTRAINT fk_agendamento_status1 FOREIGN KEY (fkStatus) REFERENCES status (id) ON DELETE RESTRICT
+  INDEX fkCliente (fkCliente ASC) VISIBLE,
+  INDEX fkFuncionario (fkFuncionario ASC) VISIBLE,
+  INDEX fkSala (fkSala ASC) VISIBLE,
+  INDEX fk_agendamento_status1_idx (fkStatus ASC) VISIBLE,
+  CONSTRAINT agendamento_ibfk_1
+    FOREIGN KEY (fkCliente)
+    REFERENCES cliente (id),
+  CONSTRAINT agendamento_ibfk_2
+    FOREIGN KEY (fkFuncionario)
+    REFERENCES funcionario (id),
+  CONSTRAINT agendamento_ibfk_3
+    FOREIGN KEY (fkSala)
+    REFERENCES sala (id),
+  CONSTRAINT fk_agendamento_status1
+    FOREIGN KEY (fkStatus)
+    REFERENCES status (id)
 );
 
-CREATE TABLE IF NOT EXISTS atendimento (
+CREATE TABLE IF NOT EXISTS servico (
   id INT NOT NULL AUTO_INCREMENT,
-  fkAgendamento INT NOT NULL,
-  descricao VARCHAR(255) NULL DEFAULT NULL,
-  observacoes VARCHAR(255) NULL DEFAULT NULL,
-  PRIMARY KEY (id),
-  CONSTRAINT atendimento_ibfk_1 FOREIGN KEY (fkAgendamento) REFERENCES agendamento (id) ON DELETE CASCADE
+  nome VARCHAR(100) NOT NULL,
+  valor DECIMAL(10,2) NOT NULL,
+  descricao VARCHAR(255) NOT NULL,
+  tempoMedio INT NULL DEFAULT NULL,
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS atendimento_servico (
   id INT NOT NULL AUTO_INCREMENT,
   valor_unitario DECIMAL(10,2) NOT NULL,
-  fkAtendimento INT NOT NULL,
   fkServico INT NOT NULL,
+  fkAgendamento INT NOT NULL,
+  descricao VARCHAR(255) NULL DEFAULT NULL,
+  `observações` VARCHAR(255) NULL DEFAULT NULL,
   PRIMARY KEY (id),
-  CONSTRAINT atendimento_servico_ibfk_1 FOREIGN KEY (fkAtendimento) REFERENCES atendimento (id) ON DELETE CASCADE,
-  CONSTRAINT atendimento_servico_ibfk_2 FOREIGN KEY (fkServico) REFERENCES servico (id) ON DELETE RESTRICT
+  INDEX fkServico (fkServico ASC) VISIBLE,
+  INDEX fk_atendimento_servico_agendamento1_idx (fkAgendamento ASC) VISIBLE,
+  CONSTRAINT atendimento_servico_ibfk_2
+    FOREIGN KEY (fkServico)
+    REFERENCES servico (id),
+  CONSTRAINT fk_atendimento_servico_agendamento1
+    FOREIGN KEY (fkAgendamento)
+    REFERENCES agendamento (id)
 );
 
 CREATE TABLE IF NOT EXISTS especialidade (
@@ -140,16 +167,26 @@ CREATE TABLE IF NOT EXISTS especialidade_servico (
   fkEspecialidade INT NOT NULL,
   fkServico INT NOT NULL,
   PRIMARY KEY (fkEspecialidade, fkServico),
-  CONSTRAINT especialidadeservico_ibfk_1 FOREIGN KEY (fkEspecialidade) REFERENCES especialidade (id) ON DELETE CASCADE,
-  CONSTRAINT especialidadeservico_ibfk_2 FOREIGN KEY (fkServico) REFERENCES servico (id) ON DELETE CASCADE
+  INDEX fkServico (fkServico ASC) VISIBLE,
+  CONSTRAINT especialidadeservico_ibfk_1
+    FOREIGN KEY (fkEspecialidade)
+    REFERENCES especialidade (id),
+  CONSTRAINT especialidadeservico_ibfk_2
+    FOREIGN KEY (fkServico)
+    REFERENCES servico (id)
 );
 
 CREATE TABLE IF NOT EXISTS funcionario_especialidade (
   fkFuncionario INT NOT NULL,
   fkEspecialidade INT NOT NULL,
   PRIMARY KEY (fkFuncionario, fkEspecialidade),
-  CONSTRAINT funcionario_especialidade_ibfk_1 FOREIGN KEY (fkFuncionario) REFERENCES funcionario (id) ON DELETE CASCADE,
-  CONSTRAINT funcionario_especialidade_ibfk_2 FOREIGN KEY (fkEspecialidade) REFERENCES especialidade (id) ON DELETE CASCADE
+  INDEX fkEspecialidade (fkEspecialidade ASC) VISIBLE,
+  CONSTRAINT funcionario_especialidade_ibfk_1
+    FOREIGN KEY (fkFuncionario)
+    REFERENCES funcionario (id),
+  CONSTRAINT funcionario_especialidade_ibfk_2
+    FOREIGN KEY (fkEspecialidade)
+    REFERENCES especialidade (id)
 );
 
 CREATE TABLE IF NOT EXISTS permissoes (
@@ -163,16 +200,27 @@ CREATE TABLE IF NOT EXISTS permissoes_cargo (
   fkPermissoes INT NOT NULL,
   fkCargo INT NOT NULL,
   PRIMARY KEY (fkPermissoes, fkCargo),
-  CONSTRAINT permissoescargo_ibfk_1 FOREIGN KEY (fkPermissoes) REFERENCES permissoes (id) ON DELETE CASCADE,
-  CONSTRAINT permissoescargo_ibfk_2 FOREIGN KEY (fkCargo) REFERENCES cargo (id) ON DELETE CASCADE
+  INDEX fkCargo (fkCargo ASC) VISIBLE,
+  CONSTRAINT permissoescargo_ibfk_1
+    FOREIGN KEY (fkPermissoes)
+    REFERENCES permissoes (id),
+  CONSTRAINT permissoescargo_ibfk_2
+    FOREIGN KEY (fkCargo)
+    REFERENCES cargo (id)
 );
 
 CREATE TABLE IF NOT EXISTS sala_servico (
   fkSala INT NOT NULL,
   fkServico INT NOT NULL,
   PRIMARY KEY (fkSala, fkServico),
-  CONSTRAINT fk_sala_has_servico_sala1 FOREIGN KEY (fkSala) REFERENCES sala (id) ON DELETE CASCADE,
-  CONSTRAINT fk_sala_has_servico_servico1 FOREIGN KEY (fkServico) REFERENCES servico (id) ON DELETE CASCADE
+  INDEX fk_sala_has_servico_servico1_idx (fkServico ASC) VISIBLE,
+  INDEX fk_sala_has_servico_sala1_idx (fkSala ASC) VISIBLE,
+  CONSTRAINT fk_sala_has_servico_sala1
+    FOREIGN KEY (fkSala)
+    REFERENCES sala (id),
+  CONSTRAINT fk_sala_has_servico_servico1
+    FOREIGN KEY (fkServico)
+    REFERENCES servico (id)
 );
 
 INSERT INTO cargo (nome, descricao) VALUES
@@ -186,11 +234,11 @@ INSERT INTO permissoes (nome, descricao) VALUES
 ('REALIZAR_ATENDIMENTO', 'Executar atendimentos');
 
 INSERT INTO permissoes_cargo VALUES
-(1,1),
-(2,1),
-(3,1),
-(2,2),
-(3,3);
+(1, 1),
+(2, 1),
+(3, 1),
+(2, 2),
+(3, 3);
 
 INSERT INTO status (nome) VALUES
 ('Agendado'),
@@ -212,10 +260,10 @@ INSERT INTO servico (nome, valor, descricao, tempoMedio) VALUES
 ('Auriculoterapia', 80.00, 'Tratamento auricular', 40);
 
 INSERT INTO especialidade_servico VALUES
-(1,1),
-(2,1),
-(3,1),
-(2,2);
+(1, 1),
+(2, 1),
+(3, 1),
+(2, 2);
 
 DELIMITER $$
 
@@ -224,21 +272,18 @@ BEFORE INSERT ON agendamento
 FOR EACH ROW
 BEGIN
   IF EXISTS (
-    SELECT 1 FROM agendamento
+    SELECT 1
+    FROM agendamento
     WHERE fkFuncionario = NEW.fkFuncionario
-    AND (
-      (NEW.data_hora_inicio BETWEEN data_hora_inicio AND data_hora_fim)
-      OR
-      (NEW.data_hora_fim BETWEEN data_hora_inicio AND data_hora_fim)
-    )
+      AND NEW.data_hora_inicio < data_hora_fim
+      AND NEW.data_hora_fim > data_hora_inicio
   ) THEN
     SIGNAL SQLSTATE '45000'
-    SET MESSAGE_TEXT = 'Conflito de horário para o funcionário';
+      SET MESSAGE_TEXT = 'Conflito de horário para o funcionário';
   END IF;
 END$$
 
 DELIMITER ;
-
 
 DELIMITER $$
 
@@ -251,25 +296,27 @@ BEGIN
   SET dia = DAYOFWEEK(NEW.data_hora_inicio);
 
   IF NOT EXISTS (
-    SELECT 1 FROM agenda_funcionario
+    SELECT 1
+    FROM agenda_funcionario
     WHERE fkFuncionario = NEW.fkFuncionario
-    AND dia_semana = dia
-    AND TIME(NEW.data_hora_inicio) BETWEEN hora_inicio AND hora_fim
+      AND dia_semana = dia
+      AND TIME(NEW.data_hora_inicio) >= hora_inicio
+      AND TIME(NEW.data_hora_fim) <= hora_fim
   ) THEN
     SIGNAL SQLSTATE '45000'
-    SET MESSAGE_TEXT = 'Fora do horário de trabalho';
+      SET MESSAGE_TEXT = 'Fora do horário de trabalho';
   END IF;
 END$$
 
 DELIMITER ;
 
-CREATE VIEW vw_agendamentos_completo AS
-SELECT 
+CREATE OR REPLACE VIEW vw_agendamentos_completo AS
+SELECT
   a.id,
   u.nome AS cliente,
   f.id AS funcionario_id,
   uf.nome AS funcionario,
-  s.nome AS servico,
+  GROUP_CONCAT(s.nome ORDER BY s.nome SEPARATOR ', ') AS servicos,
   sa.descricao AS sala,
   st.nome AS status,
   a.data_hora_inicio,
@@ -279,22 +326,31 @@ JOIN cliente c ON a.fkCliente = c.id
 JOIN usuario u ON c.fkUsuario = u.id
 JOIN funcionario f ON a.fkFuncionario = f.id
 JOIN usuario uf ON f.fkUsuario = uf.id
-JOIN servico s ON a.fkServico = s.id
+LEFT JOIN atendimento_servico ats ON ats.fkAgendamento = a.id
+LEFT JOIN servico s ON ats.fkServico = s.id
 JOIN sala sa ON a.fkSala = sa.id
-JOIN status st ON a.fkStatus = st.id;
+JOIN status st ON a.fkStatus = st.id
+GROUP BY
+  a.id,
+  u.nome,
+  f.id,
+  uf.nome,
+  sa.descricao,
+  st.nome,
+  a.data_hora_inicio,
+  a.data_hora_fim;
 
-
-CREATE VIEW vw_faturamento AS
-SELECT 
+CREATE OR REPLACE VIEW vw_faturamento AS
+SELECT
   DATE(a.data_hora_inicio) AS data,
-  SUM(s.valor) AS total
+  SUM(ats.valor_unitario) AS total
 FROM agendamento a
-JOIN servico s ON a.fkServico = s.id
+JOIN atendimento_servico ats ON ats.fkAgendamento = a.id
 WHERE a.fkStatus = 4
 GROUP BY DATE(a.data_hora_inicio);
 
-CREATE VIEW vw_agenda_funcionario AS
-SELECT 
+CREATE OR REPLACE VIEW vw_agenda_funcionario AS
+SELECT
   f.id AS funcionario_id,
   u.nome,
   af.dia_semana,
