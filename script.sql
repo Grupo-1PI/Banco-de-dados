@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS clinica_acupuntura;
-USE clinica_acupuntura;
+CREATE DATABASE IF NOT EXISTS taotenshin;
+USE taotenshin;
 
 CREATE TABLE IF NOT EXISTS cargo (
   id INT NOT NULL AUTO_INCREMENT,
@@ -30,8 +30,11 @@ CREATE TABLE IF NOT EXISTS usuario (
   ativo TINYINT(1) NOT NULL DEFAULT 1,
   fkEndereco INT NOT NULL,
   PRIMARY KEY (id),
-  UNIQUE INDEX email_UNIQUE (email ASC),
-  CONSTRAINT fk_usuario_endereco1 FOREIGN KEY (fkEndereco) REFERENCES endereco (id) ON DELETE RESTRICT
+  INDEX fk_usuario_endereco1_idx (fkEndereco ASC) VISIBLE,
+  UNIQUE INDEX email_UNIQUE (email ASC) VISIBLE,
+  CONSTRAINT fk_usuario_endereco1
+    FOREIGN KEY (fkEndereco)
+    REFERENCES endereco (id)
 );
 
 CREATE TABLE IF NOT EXISTS funcionario (
@@ -39,8 +42,14 @@ CREATE TABLE IF NOT EXISTS funcionario (
   fkUsuario INT NOT NULL,
   fkCargo INT NOT NULL,
   PRIMARY KEY (id, fkUsuario),
-  CONSTRAINT funcionario_ibfk_1 FOREIGN KEY (fkCargo) REFERENCES cargo (id) ON DELETE RESTRICT,
-  CONSTRAINT fk_funcionario_usuario1 FOREIGN KEY (fkUsuario) REFERENCES usuario (id) ON DELETE CASCADE
+  INDEX fkCargo (fkCargo ASC) VISIBLE,
+  INDEX fk_funcionario_usuario1_idx (fkUsuario ASC) VISIBLE,
+  CONSTRAINT funcionario_ibfk_1
+    FOREIGN KEY (fkCargo)
+    REFERENCES cargo (id),
+  CONSTRAINT fk_funcionario_usuario1
+    FOREIGN KEY (fkUsuario)
+    REFERENCES usuario (id)
 );
 
 CREATE TABLE IF NOT EXISTS agenda_excecao (
@@ -51,7 +60,10 @@ CREATE TABLE IF NOT EXISTS agenda_excecao (
   hora_fim TIME NULL DEFAULT NULL,
   disponivel TINYINT(1) NULL DEFAULT '1',
   PRIMARY KEY (id),
-  CONSTRAINT agenda_excecao_ibfk_1 FOREIGN KEY (fkFuncionario) REFERENCES funcionario (id) ON DELETE CASCADE
+  INDEX fkFuncionario (fkFuncionario ASC) VISIBLE,
+  CONSTRAINT agenda_excecao_ibfk_1
+    FOREIGN KEY (fkFuncionario)
+    REFERENCES funcionario (id)
 );
 
 CREATE TABLE IF NOT EXISTS agenda_funcionario (
@@ -61,7 +73,10 @@ CREATE TABLE IF NOT EXISTS agenda_funcionario (
   hora_inicio TIME NOT NULL,
   hora_fim TIME NOT NULL,
   PRIMARY KEY (id),
-  CONSTRAINT agenda_funcionario_ibfk_1 FOREIGN KEY (fkFuncionario) REFERENCES funcionario (id) ON DELETE CASCADE
+  INDEX fkFuncionario (fkFuncionario ASC) VISIBLE,
+  CONSTRAINT agenda_funcionario_ibfk_1
+    FOREIGN KEY (fkFuncionario)
+    REFERENCES funcionario (id)
 );
 
 CREATE TABLE IF NOT EXISTS cliente (
@@ -69,21 +84,15 @@ CREATE TABLE IF NOT EXISTS cliente (
   fkUsuario INT NOT NULL,
   observacao VARCHAR(255) NULL DEFAULT NULL,
   PRIMARY KEY (id, fkUsuario),
-  CONSTRAINT fk_cliente_usuario1 FOREIGN KEY (fkUsuario) REFERENCES usuario (id) ON DELETE CASCADE
+  INDEX fk_cliente_usuario1_idx (fkUsuario ASC) VISIBLE,
+  CONSTRAINT fk_cliente_usuario1
+    FOREIGN KEY (fkUsuario)
+    REFERENCES usuario (id)
 );
 
 CREATE TABLE IF NOT EXISTS sala (
   id INT NOT NULL AUTO_INCREMENT,
   descricao VARCHAR(45) NULL DEFAULT NULL,
-  PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS servico (
-  id INT NOT NULL AUTO_INCREMENT,
-  nome VARCHAR(100) NOT NULL,
-  valor DECIMAL(10,2) NOT NULL,
-  descricao VARCHAR(255) NOT NULL,
-  tempoMedio INT NULL DEFAULT NULL,
   PRIMARY KEY (id)
 );
 
@@ -101,33 +110,51 @@ CREATE TABLE IF NOT EXISTS agendamento (
   fkCliente INT NOT NULL,
   fkFuncionario INT NOT NULL,
   fkSala INT NOT NULL,
-  fkServico INT NOT NULL,
   fkStatus INT NOT NULL,
   PRIMARY KEY (id),
-  CONSTRAINT agendamento_ibfk_1 FOREIGN KEY (fkCliente) REFERENCES cliente (id) ON DELETE RESTRICT,
-  CONSTRAINT agendamento_ibfk_2 FOREIGN KEY (fkFuncionario) REFERENCES funcionario (id) ON DELETE RESTRICT,
-  CONSTRAINT agendamento_ibfk_3 FOREIGN KEY (fkSala) REFERENCES sala (id) ON DELETE RESTRICT,
-  CONSTRAINT agendamento_ibfk_4 FOREIGN KEY (fkServico) REFERENCES servico (id) ON DELETE RESTRICT,
-  CONSTRAINT fk_agendamento_status1 FOREIGN KEY (fkStatus) REFERENCES status (id) ON DELETE RESTRICT
+  INDEX fkCliente (fkCliente ASC) VISIBLE,
+  INDEX fkFuncionario (fkFuncionario ASC) VISIBLE,
+  INDEX fkSala (fkSala ASC) VISIBLE,
+  INDEX fk_agendamento_status1_idx (fkStatus ASC) VISIBLE,
+  CONSTRAINT agendamento_ibfk_1
+    FOREIGN KEY (fkCliente)
+    REFERENCES cliente (id),
+  CONSTRAINT agendamento_ibfk_2
+    FOREIGN KEY (fkFuncionario)
+    REFERENCES funcionario (id),
+  CONSTRAINT agendamento_ibfk_3
+    FOREIGN KEY (fkSala)
+    REFERENCES sala (id),
+  CONSTRAINT fk_agendamento_status1
+    FOREIGN KEY (fkStatus)
+    REFERENCES status (id)
 );
 
-CREATE TABLE IF NOT EXISTS atendimento (
+CREATE TABLE IF NOT EXISTS servico (
   id INT NOT NULL AUTO_INCREMENT,
-  fkAgendamento INT NOT NULL,
-  descricao VARCHAR(255) NULL DEFAULT NULL,
-  observacoes VARCHAR(255) NULL DEFAULT NULL,
-  PRIMARY KEY (id),
-  CONSTRAINT atendimento_ibfk_1 FOREIGN KEY (fkAgendamento) REFERENCES agendamento (id) ON DELETE CASCADE
+  nome VARCHAR(100) NOT NULL,
+  valor DECIMAL(10,2) NOT NULL,
+  descricao VARCHAR(255) NOT NULL,
+  tempoMedio INT NULL DEFAULT NULL,
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS atendimento_servico (
   id INT NOT NULL AUTO_INCREMENT,
   valor_unitario DECIMAL(10,2) NOT NULL,
-  fkAtendimento INT NOT NULL,
   fkServico INT NOT NULL,
+  fkAgendamento INT NOT NULL,
+  descricao VARCHAR(255) NULL DEFAULT NULL,
+  `observações` VARCHAR(255) NULL DEFAULT NULL,
   PRIMARY KEY (id),
-  CONSTRAINT atendimento_servico_ibfk_1 FOREIGN KEY (fkAtendimento) REFERENCES atendimento (id) ON DELETE CASCADE,
-  CONSTRAINT atendimento_servico_ibfk_2 FOREIGN KEY (fkServico) REFERENCES servico (id) ON DELETE RESTRICT
+  INDEX fkServico (fkServico ASC) VISIBLE,
+  INDEX fk_atendimento_servico_agendamento1_idx (fkAgendamento ASC) VISIBLE,
+  CONSTRAINT atendimento_servico_ibfk_2
+    FOREIGN KEY (fkServico)
+    REFERENCES servico (id),
+  CONSTRAINT fk_atendimento_servico_agendamento1
+    FOREIGN KEY (fkAgendamento)
+    REFERENCES agendamento (id)
 );
 
 CREATE TABLE IF NOT EXISTS especialidade (
@@ -140,16 +167,26 @@ CREATE TABLE IF NOT EXISTS especialidade_servico (
   fkEspecialidade INT NOT NULL,
   fkServico INT NOT NULL,
   PRIMARY KEY (fkEspecialidade, fkServico),
-  CONSTRAINT especialidadeservico_ibfk_1 FOREIGN KEY (fkEspecialidade) REFERENCES especialidade (id) ON DELETE CASCADE,
-  CONSTRAINT especialidadeservico_ibfk_2 FOREIGN KEY (fkServico) REFERENCES servico (id) ON DELETE CASCADE
+  INDEX fkServico (fkServico ASC) VISIBLE,
+  CONSTRAINT especialidadeservico_ibfk_1
+    FOREIGN KEY (fkEspecialidade)
+    REFERENCES especialidade (id),
+  CONSTRAINT especialidadeservico_ibfk_2
+    FOREIGN KEY (fkServico)
+    REFERENCES servico (id)
 );
 
 CREATE TABLE IF NOT EXISTS funcionario_especialidade (
   fkFuncionario INT NOT NULL,
   fkEspecialidade INT NOT NULL,
   PRIMARY KEY (fkFuncionario, fkEspecialidade),
-  CONSTRAINT funcionario_especialidade_ibfk_1 FOREIGN KEY (fkFuncionario) REFERENCES funcionario (id) ON DELETE CASCADE,
-  CONSTRAINT funcionario_especialidade_ibfk_2 FOREIGN KEY (fkEspecialidade) REFERENCES especialidade (id) ON DELETE CASCADE
+  INDEX fkEspecialidade (fkEspecialidade ASC) VISIBLE,
+  CONSTRAINT funcionario_especialidade_ibfk_1
+    FOREIGN KEY (fkFuncionario)
+    REFERENCES funcionario (id),
+  CONSTRAINT funcionario_especialidade_ibfk_2
+    FOREIGN KEY (fkEspecialidade)
+    REFERENCES especialidade (id)
 );
 
 CREATE TABLE IF NOT EXISTS permissoes (
@@ -163,14 +200,25 @@ CREATE TABLE IF NOT EXISTS permissoes_cargo (
   fkPermissoes INT NOT NULL,
   fkCargo INT NOT NULL,
   PRIMARY KEY (fkPermissoes, fkCargo),
-  CONSTRAINT permissoescargo_ibfk_1 FOREIGN KEY (fkPermissoes) REFERENCES permissoes (id) ON DELETE CASCADE,
-  CONSTRAINT permissoescargo_ibfk_2 FOREIGN KEY (fkCargo) REFERENCES cargo (id) ON DELETE CASCADE
+  INDEX fkCargo (fkCargo ASC) VISIBLE,
+  CONSTRAINT permissoescargo_ibfk_1
+    FOREIGN KEY (fkPermissoes)
+    REFERENCES permissoes (id),
+  CONSTRAINT permissoescargo_ibfk_2
+    FOREIGN KEY (fkCargo)
+    REFERENCES cargo (id)
 );
 
 CREATE TABLE IF NOT EXISTS sala_servico (
   fkSala INT NOT NULL,
   fkServico INT NOT NULL,
   PRIMARY KEY (fkSala, fkServico),
-  CONSTRAINT fk_sala_has_servico_sala1 FOREIGN KEY (fkSala) REFERENCES sala (id) ON DELETE CASCADE,
-  CONSTRAINT fk_sala_has_servico_servico1 FOREIGN KEY (fkServico) REFERENCES servico (id) ON DELETE CASCADE
+  INDEX fk_sala_has_servico_servico1_idx (fkServico ASC) VISIBLE,
+  INDEX fk_sala_has_servico_sala1_idx (fkSala ASC) VISIBLE,
+  CONSTRAINT fk_sala_has_servico_sala1
+    FOREIGN KEY (fkSala)
+    REFERENCES sala (id),
+  CONSTRAINT fk_sala_has_servico_servico1
+    FOREIGN KEY (fkServico)
+    REFERENCES servico (id)
 );

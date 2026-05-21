@@ -9,11 +9,11 @@ INSERT INTO permissoes (nome, descricao) VALUES
 ('REALIZAR_ATENDIMENTO', 'Executar atendimentos');
 
 INSERT INTO permissoes_cargo VALUES
-(1,1),
-(2,1),
-(3,1),
-(2,2),
-(3,3);
+(1, 1),
+(2, 1),
+(3, 1),
+(2, 2),
+(3, 3);
 
 INSERT INTO status (nome) VALUES
 ('Agendado'),
@@ -35,7 +35,7 @@ INSERT INTO servico (nome, valor, descricao, tempoMedio) VALUES
 ('Auriculoterapia', 80.00, 'Tratamento auricular', 40);
 
 INSERT INTO especialidade_servico VALUES
-(1,1),
-(2,1),
-(3,1),
-(2,2);
+(1, 1),
+(2, 1),
+(3, 1),
+(2, 2);
