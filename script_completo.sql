@@ -4,7 +4,7 @@ USE taotenshin;
 CREATE TABLE IF NOT EXISTS cargo (
   id INT NOT NULL AUTO_INCREMENT,
   nome VARCHAR(45) NOT NULL,
-  descricao VARCHAR(45) NOT NULL,
+  descricao VARCHAR(255) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS cliente (
 
 CREATE TABLE IF NOT EXISTS sala (
   id INT NOT NULL AUTO_INCREMENT,
-  descricao VARCHAR(45) NULL DEFAULT NULL,
+  descricao VARCHAR(255) NULL DEFAULT NULL,
 
   PRIMARY KEY (id)
 );
@@ -242,7 +242,7 @@ CREATE TABLE IF NOT EXISTS funcionario_especialidade (
 CREATE TABLE IF NOT EXISTS permissoes (
   id INT NOT NULL AUTO_INCREMENT,
   nome VARCHAR(45) NOT NULL,
-  descricao VARCHAR(45) NOT NULL,
+  descricao VARCHAR(255) NOT NULL,
 
   PRIMARY KEY (id)
 );
@@ -293,22 +293,32 @@ INSERT INTO endereco (id, cep, logradouro, bairro, cidade, uf, numero, complemen
 (5, '07000-000', 'Rua das Flores',          'Centro',              'Guarulhos',   'SP', '123',  NULL);
 
 
+
+
 -- ─────────────────────────────────────────
 -- 2. CARGO
 -- ─────────────────────────────────────────
 INSERT INTO cargo (id, nome, descricao) VALUES
-(1, 'Administrador',  'Acesso total ao sistema'),
-(2, 'Recepcionista',  'Gerencia agendamentos'),
-(3, 'Acupunturista',  'Realiza atendimentos');
+(1, 'Administrador',   'Acesso total ao sistema'),
+(2, 'Recepcionista',   'Gerencia agendamentos/cadastros'),
+(3, 'Acupunturista',   'Realiza atendimentos/agenda');
 
 
 -- ─────────────────────────────────────────
 -- 3. PERMISSÕES
 -- ─────────────────────────────────────────
 INSERT INTO permissoes (id, nome, descricao) VALUES
-(1, 'CRUD_USUARIO',         'Gerenciar usuários'),
-(2, 'CRUD_AGENDAMENTO',     'Gerenciar agendamentos'),
-(3, 'REALIZAR_ATENDIMENTO', 'Executar atendimentos');
+-- CRUD_USUARIO: CargoController, FuncionarioController, PermissaoController
+(1,  'CRUD_USUARIO',              'Gerenciar usuarios, cargos, funcionarios e permissoes'),
+-- CRUD_AGENDAMENTO: AgendamentoController, AgendaFuncionarioController,
+--                   EspecialidadeController, SalaController, ServicoController, StatusController
+(2,  'CRUD_AGENDAMENTO',          'Gerenciar agendamentos, agendas, especialidades, salas, servicos e status'),
+-- REALIZAR_ATENDIMENTO: mesmos controllers de CRUD_AGENDAMENTO (acesso do acupunturista)
+(3,  'REALIZAR_ATENDIMENTO',      'Visualizar e executar atendimentos'),
+-- CRUD_CLIENTE: ClienteController (acesso exclusivo para staff)
+(4,  'CRUD_CLIENTE',              'Listar e consultar clientes'),
+-- CRUD_DASHBOARD: DashboardController (acesso exclusivo para staff)
+(5,  'CRUD_DASHBOARD',            'Acessar metricas e dashboards');
 
 
 -- ─────────────────────────────────────────
@@ -316,11 +326,22 @@ INSERT INTO permissoes (id, nome, descricao) VALUES
 --    Admin: todas | Recepcionista: agendamento | Acupunturista: atendimento
 -- ─────────────────────────────────────────
 INSERT INTO permissoes_cargo (fkPermissoes, fkCargo) VALUES
-(1, 1),
-(2, 1),
-(3, 1),
-(2, 2),
-(3, 3);
+(1, 1),  -- CRUD_USUARIO
+(2, 1),  -- CRUD_AGENDAMENTO
+(3, 1),  -- REALIZAR_ATENDIMENTO
+(4, 1),  -- CRUD_CLIENTE
+(5, 1);  -- CRUD_DASHBOARD
+
+-- Recepcionista: agendamentos, clientes, dashboard
+INSERT INTO permissoes_cargo (fkPermissoes, fkCargo) VALUES
+(2, 2),  -- CRUD_AGENDAMENTO
+(4, 2),  -- CRUD_CLIENTE
+(5, 2);  -- CRUD_DASHBOARD
+
+-- Acupunturista: atendimentos e agendamentos
+INSERT INTO permissoes_cargo (fkPermissoes, fkCargo) VALUES
+(2, 3),  -- CRUD_AGENDAMENTO
+(3, 3);  -- REALIZAR_ATENDIMENTO
 
 
 -- ─────────────────────────────────────────
