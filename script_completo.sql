@@ -1,3 +1,4 @@
+DROP DATABASE IF exists taotenshin;
 CREATE DATABASE IF NOT EXISTS taotenshin;
 USE taotenshin;
 
@@ -282,6 +283,47 @@ CREATE TABLE IF NOT EXISTS sala_servico (
     REFERENCES servico (id)
 );
 
+CREATE TABLE IF NOT EXISTS triagem_pergunta (
+  id INT NOT NULL AUTO_INCREMENT,
+  texto VARCHAR(500) NOT NULL,
+  ordem INT DEFAULT 0,
+  raiz TINYINT(1) DEFAULT 0,
+  fk_especialidade INT NULL,
+
+  PRIMARY KEY (id),
+  INDEX idx_raiz (raiz),
+  CONSTRAINT fk_triagem_pergunta_especialidade
+    FOREIGN KEY (fk_especialidade)
+    REFERENCES especialidade (id)
+    ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS triagem_resposta (
+  id INT NOT NULL AUTO_INCREMENT,
+  fk_pergunta INT NOT NULL,
+  resposta ENUM('SIM', 'NAO') NOT NULL,
+  fk_proxima_pergunta INT NULL,
+  fk_especialidade INT NULL,
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_pergunta_resposta (fk_pergunta, resposta),
+  INDEX idx_lookup (fk_pergunta, resposta),
+  CONSTRAINT fk_triagem_resposta_pergunta
+    FOREIGN KEY (fk_pergunta)
+    REFERENCES triagem_pergunta (id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_triagem_resposta_proxima
+    FOREIGN KEY (fk_proxima_pergunta)
+    REFERENCES triagem_pergunta (id)
+    ON DELETE SET NULL,
+  CONSTRAINT fk_triagem_resposta_especialidade
+    FOREIGN KEY (fk_especialidade)
+    REFERENCES especialidade (id)
+    ON DELETE SET NULL
+);
+
+
+
 -- ─────────────────────────────────────────
 -- 1. ENDEREÇO  (obrigatório antes de usuario)
 -- ─────────────────────────────────────────
@@ -347,6 +389,7 @@ INSERT INTO permissoes_cargo (fkPermissoes, fkCargo) VALUES
 -- ─────────────────────────────────────────
 -- 5. STATUS do agendamento
 -- ─────────────────────────────────────────
+
 INSERT INTO status (id, nome) VALUES
 (1, 'Agendado'),
 (2, 'Confirmado'),
@@ -427,7 +470,7 @@ INSERT INTO usuario (id, nome, telefone, email, senha, data_nascimento, ativo, f
 -- Clientes
 (3, 'Felipe Silva',         '11988880001', 'felipe@email.com',
  '$2a$12$LlrgS/ccNTbuAfIAGAJGZOjnPKnJRg7cGWX3KatA1EKltYXtVxR5S', '2000-05-10', 1, 3),
-(4, 'Ana Paula Costa',      '11988880002', 'ana@email.com',
+(4, 'Ana Paula Costa',      '11962687827', 'ana@email.com',
  '$2a$12$LlrgS/ccNTbuAfIAGAJGZOjnPKnJRg7cGWX3KatA1EKltYXtVxR5S', '1992-11-03', 1, 4);
 
 
@@ -526,6 +569,37 @@ INSERT INTO atendimento_servico (id, valor_unitario, fkServico, fkAgendamento, d
 (3, 120.00, 1, 3, 'Acupuntura — protocolo para insônia',        'Usar agulhas de 0.25mm'),
 (4, 120.00, 1, 4, 'Acupuntura — sessão de retorno completa',    'Paciente evoluiu bem'),
 (5,  70.00, 4, 5, 'Acupuntura Online — orientação pós-sessão',  'Enviar protocolo por e-mail');
+
+
+-- ─────────────────────────────────────────
+-- 20. TRIAGEM PERGUNTA
+--     Árvore de decisão para recomendação de especialidade
+-- ─────────────────────────────────────────
+INSERT INTO triagem_pergunta (id, texto, ordem, raiz, fk_especialidade) VALUES
+(1, 'O paciente sente dor muscular ou tensão corporal?', 1, 1, NULL),
+(2, 'A dor é aguda e apareceu após esforço físico ou trauma recente?', 2, 0, NULL),
+(3, 'O paciente relata ansiedade, estresse ou nervosismo frequente?', 3, 0, NULL),
+(4, 'Dor muscular', 5, 0, 1),
+(5, 'Ansiedade', 6, 0, 2),
+(6, 'Insônia', 7, 0, 3),
+(7, 'Reabilitação', 8, 0, 4);
+
+-- ─────────────────────────────────────────
+-- 21. TRIAGEM RESPOSTA
+--     Arestas da árvore de decisão
+-- ─────────────────────────────────────────
+INSERT INTO triagem_resposta (fk_pergunta, resposta, fk_proxima_pergunta, fk_especialidade) VALUES
+-- P1: Dor muscular?
+(1, 'SIM', 2, NULL),          -- SIM -> P2
+(1, 'NAO', 3, NULL),          -- NÃO -> P3
+
+-- P2: Dor aguda pós-esforço/trauma?
+(2, 'SIM', NULL, 4),          -- SIM -> Reabilitação
+(2, 'NAO', NULL, 1),          -- NÃO -> Dor muscular
+
+-- P3: Ansiedade/estresse?
+(3, 'SIM', NULL, 2),          -- SIM -> Ansiedade
+(3, 'NAO', NULL, 3),          -- NÃO -> Insônia
 
 DELIMITER $$
 

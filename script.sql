@@ -281,3 +281,43 @@ CREATE TABLE IF NOT EXISTS sala_servico (
     FOREIGN KEY (fkServico)
     REFERENCES servico (id)
 );
+
+CREATE TABLE IF NOT EXISTS triagem_pergunta (
+  id INT NOT NULL AUTO_INCREMENT,
+  texto VARCHAR(500) NOT NULL,
+  ordem INT DEFAULT 0,
+  raiz TINYINT(1) DEFAULT 0,
+  fk_especialidade INT NULL,
+
+  PRIMARY KEY (id),
+  INDEX idx_raiz (raiz),
+  CONSTRAINT fk_triagem_pergunta_especialidade
+    FOREIGN KEY (fk_especialidade)
+    REFERENCES especialidade (id)
+    ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS triagem_resposta (
+  id INT NOT NULL AUTO_INCREMENT,
+  fk_pergunta INT NOT NULL,
+  resposta ENUM('SIM', 'NAO') NOT NULL,
+  fk_proxima_pergunta INT NULL,
+  fk_especialidade INT NULL,
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_pergunta_resposta (fk_pergunta, resposta),
+  INDEX idx_lookup (fk_pergunta, resposta),
+  CONSTRAINT fk_triagem_resposta_pergunta
+    FOREIGN KEY (fk_pergunta)
+    REFERENCES triagem_pergunta (id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_triagem_resposta_proxima
+    FOREIGN KEY (fk_proxima_pergunta)
+    REFERENCES triagem_pergunta (id)
+    ON DELETE SET NULL,
+  CONSTRAINT fk_triagem_resposta_especialidade
+    FOREIGN KEY (fk_especialidade)
+    REFERENCES especialidade (id)
+    ON DELETE SET NULL
+);
+
