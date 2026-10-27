@@ -599,7 +599,7 @@ INSERT INTO triagem_resposta (fk_pergunta, resposta, fk_proxima_pergunta, fk_esp
 
 -- P3: Ansiedade/estresse?
 (3, 'SIM', NULL, 2),          -- SIM -> Ansiedade
-(3, 'NAO', NULL, 3),          -- NÃO -> Insônia
+(3, 'NAO', NULL, 3);          -- NÃO -> Insônia
 
 DELIMITER $$
 
