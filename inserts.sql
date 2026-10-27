@@ -1,4 +1,3 @@
-
 -- ─────────────────────────────────────────
 -- 1. ENDEREÇO  (obrigatório antes de usuario)
 -- ─────────────────────────────────────────
@@ -64,6 +63,7 @@ INSERT INTO permissoes_cargo (fkPermissoes, fkCargo) VALUES
 -- ─────────────────────────────────────────
 -- 5. STATUS do agendamento
 -- ─────────────────────────────────────────
+
 INSERT INTO status (id, nome) VALUES
 (1, 'Agendado'),
 (2, 'Confirmado'),
@@ -253,11 +253,10 @@ INSERT INTO triagem_pergunta (id, texto, ordem, raiz, fk_especialidade) VALUES
 (1, 'O paciente sente dor muscular ou tensão corporal?', 1, 1, NULL),
 (2, 'A dor é aguda e apareceu após esforço físico ou trauma recente?', 2, 0, NULL),
 (3, 'O paciente relata ansiedade, estresse ou nervosismo frequente?', 3, 0, NULL),
-(4, 'Há dificuldade para dormir ou insônia frequente?', 4, 0, NULL),
-(5, 'Dor muscular', 5, 0, 1),
-(6, 'Ansiedade', 6, 0, 2),
-(7, 'Insônia', 7, 0, 3),
-(8, 'Reabilitação', 8, 0, 4);
+(4, 'Dor muscular', 5, 0, 1),
+(5, 'Ansiedade', 6, 0, 2),
+(6, 'Insônia', 7, 0, 3),
+(7, 'Reabilitação', 8, 0, 4);
 
 -- ─────────────────────────────────────────
 -- 21. TRIAGEM RESPOSTA
@@ -274,8 +273,4 @@ INSERT INTO triagem_resposta (fk_pergunta, resposta, fk_proxima_pergunta, fk_esp
 
 -- P3: Ansiedade/estresse?
 (3, 'SIM', NULL, 2),          -- SIM -> Ansiedade
-(3, 'NAO', 4, NULL),          -- NÃO -> P4
-
--- P4: Insônia?
-(4, 'SIM', NULL, 3),          -- SIM -> Insônia
-(4, 'NAO', NULL, 1);          -- NÃO -> Dor muscular (fallback)
+(3, 'NAO', NULL, 3);          -- NÃO -> Insônia
